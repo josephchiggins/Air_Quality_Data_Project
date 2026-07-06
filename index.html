@@ -1,0 +1,3109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://www.gstatic.com https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; connect-src 'self' https://firestore.googleapis.com https://ventaira-backend-default-rtdb.firebaseio.com; img-src 'self' data: https:; font-src 'self' https:;">
+  <title>Ventaira - Air Quality Monitor</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      overflow-x: hidden;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f8f9fa;
+      color: #333;
+      line-height: 1.6;
+    }
+
+    .header {
+      background: white;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      padding: 1rem 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .nav-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: #2196F3;
+      text-decoration: none;
+    }
+
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      overflow: hidden;
+      background-image: url('ventaira-logo.png');
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+    }
+
+    .nav-links {
+      display: flex;
+      list-style: none;
+      gap: 2rem;
+      align-items: center;
+    }
+
+    .nav-links a {
+      color: #666;
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.3s ease;
+    }
+
+    .nav-links a:hover {
+      color: #2196F3;
+    }
+
+    .hero-section {
+      background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+      color: white;
+      padding: 4rem 0;
+      text-align: center;
+    }
+
+    .hero-content {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+
+    .hero-title {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      font-weight: 300;
+    }
+
+    .hero-subtitle {
+      font-size: 1.2rem;
+      margin-bottom: 2rem;
+      opacity: 0.9;
+    }
+
+    .search-container {
+      background: white;
+      border-radius: 50px;
+      padding: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      display: flex;
+      align-items: center;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .search-input {
+      flex: 1;
+      border: none;
+      outline: none;
+      padding: 12px 20px;
+      font-size: 1rem;
+      color: #333;
+      background: white;
+      border-radius: 50px;
+      width: 100%;
+    }
+
+    .search-input::placeholder {
+      color: #999;
+    }
+
+    .search-btn {
+      background: #2196F3;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 40px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 500;
+      transition: background 0.3s ease;
+    }
+
+    .search-btn:hover {
+      background: #1976D2;
+    }
+
+    .search-suggestions {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      max-width: 600px;
+      margin: 1rem auto 0;
+      max-height: 400px;
+      overflow-y: auto;
+      display: none;
+    }
+
+    .favorites-section {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      max-width: 600px;
+      margin: 1rem auto 0;
+      padding: 1rem;
+      display: none;
+    }
+
+    .favorites-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 0.5rem;
+    }
+
+    .favorites-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .favorite-item {
+      background: #f8f9fa;
+      border: 1px solid #e9ecef;
+      border-radius: 20px;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 0.9rem;
+      color: #666;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .favorite-item:hover {
+      background: #e9ecef;
+      color: #333;
+    }
+
+    .favorite-remove {
+      background: none;
+      border: none;
+      color: #999;
+      cursor: pointer;
+      padding: 0;
+      margin-left: 0.25rem;
+      font-size: 0.8rem;
+    }
+
+    .favorite-remove:hover {
+      color: #dc3545;
+    }
+
+    /* Modal Styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+
+    .modal-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .modal {
+      background: white;
+      border-radius: 15px;
+      padding: 2rem;
+      max-width: 450px;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      transform: scale(0.9);
+      transition: transform 0.3s ease;
+    }
+
+    .modal-overlay.show .modal {
+      transform: scale(1);
+    }
+
+    .modal-header {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .modal-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 0.5rem;
+    }
+
+    .modal-subtitle {
+      color: #666;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .modal-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .form-label {
+      font-weight: 500;
+      color: #333;
+      font-size: 0.9rem;
+    }
+
+    .form-input {
+      padding: 0.75rem;
+      border: 2px solid #e9ecef;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: border-color 0.3s ease;
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: #2196F3;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      flex: 1;
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #1976D2 0%, #1565C0 100%);
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      background: #f8f9fa;
+      color: #666;
+      border: 2px solid #e9ecef;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      flex: 1;
+    }
+
+    .btn-secondary:hover {
+      background: #e9ecef;
+      color: #333;
+    }
+
+    .back-btn {
+      flex: none;
+      width: auto;
+      white-space: nowrap;
+    }
+
+    .modal-benefits {
+      background: #f8f9fa;
+      padding: 1rem;
+      border-radius: 8px;
+      margin: 1rem 0;
+    }
+
+    .modal-benefits ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .modal-benefits li {
+      padding: 0.25rem 0;
+      color: #666;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .modal-benefits li:before {
+      content: "✓";
+      color: #4CAF50;
+      font-weight: bold;
+    }
+
+    .error-message {
+      background: #ffebee;
+      color: #c62828;
+      padding: 0.75rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+      display: none;
+    }
+
+    .success-message {
+      background: #e8f5e8;
+      color: #2e7d2e;
+      padding: 0.75rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+      display: none;
+    }
+
+    .user-info {
+      background: #f8f9fa;
+      padding: 1rem;
+      border-radius: 10px;
+      margin-bottom: 1rem;
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .user-email {
+      color: #666;
+      font-size: 0.9rem;
+    }
+
+    .logout-btn {
+      background: none;
+      border: none;
+      color: #2196F3;
+      cursor: pointer;
+      font-size: 0.9rem;
+      text-decoration: underline;
+    }
+
+    .suggestion-item {
+      padding: 12px 20px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      border-bottom: 1px solid #eee;
+      color: #333;
+    }
+
+    .suggestion-item:hover {
+      background: #f5f5f5;
+    }
+
+    .suggestion-item:last-child {
+      border-bottom: none;
+    }
+
+    .main-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    .location-result {
+      background: white;
+      border-radius: 15px;
+      padding: 2rem;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      margin-bottom: 2rem;
+      display: none;
+    }
+
+    /* Location result background colors based on AQI category */
+    .location-result.aqi-good {
+      background: linear-gradient(135deg, rgba(76, 175, 80, 0.08) 0%, rgba(76, 175, 80, 0.04) 100%);
+    }
+
+    .location-result.aqi-moderate {
+      background: linear-gradient(135deg, rgba(255, 235, 59, 0.1) 0%, rgba(255, 235, 59, 0.05) 100%);
+    }
+
+    .location-result.aqi-unhealthy-sensitive {
+      background: linear-gradient(135deg, rgba(255, 152, 0, 0.1) 0%, rgba(255, 152, 0, 0.05) 100%);
+    }
+
+    .location-result.aqi-unhealthy {
+      background: linear-gradient(135deg, rgba(244, 67, 54, 0.1) 0%, rgba(244, 67, 54, 0.05) 100%);
+    }
+
+    .location-result.aqi-very-unhealthy {
+      background: linear-gradient(135deg, rgba(156, 39, 176, 0.1) 0%, rgba(156, 39, 176, 0.05) 100%);
+    }
+
+    .location-result.aqi-hazardous {
+      background: linear-gradient(135deg, rgba(141, 30, 58, 0.1) 0%, rgba(141, 30, 58, 0.05) 100%);
+    }
+
+    .location-header {
+      margin-bottom: 1rem;
+    }
+
+    .location-info {
+      flex: 1;
+    }
+
+    .location-info h2 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      color: #333;
+    }
+
+    .location-meta {
+      color: #666;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+
+    .location-actions-row {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 1.5rem;
+    }
+
+    .location-main-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .favorite-btn {
+      background: white;
+      border: 2px solid #2196F3;
+      color: #2196F3;
+      padding: 0.6rem 1.2rem;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      white-space: nowrap;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .favorite-btn:hover {
+      background: #2196F3;
+      color: white;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+    }
+
+    .favorite-btn.favorited {
+      background: #2196F3;
+      color: white;
+    }
+
+    .location-info h2 {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      color: #333;
+    }
+
+    .location-meta {
+      color: #666;
+      font-size: 0.9rem;
+    }
+
+    .aqi-main {
+      background: linear-gradient(135deg, #4CAF50, #45a049);
+      color: white;
+      padding: 2rem;
+      border-radius: 15px;
+      text-align: center;
+      min-width: 200px;
+    }
+
+    .aqi-number {
+      font-size: 3rem;
+      font-weight: bold;
+      margin-bottom: 0;
+      line-height: 1;
+    }
+
+    .aqi-label {
+      font-size: 1.2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .aqi-category {
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+
+    .aqi-scale {
+      margin: 2rem 0;
+    }
+
+    .aqi-scale-container {
+      display: flex;
+      border-radius: 20px;
+      overflow: hidden;
+      height: 30px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      position: relative;
+    }
+
+    .aqi-segment {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 500;
+      font-size: 0.65rem;
+      text-shadow: 1px 1px 1px rgba(0,0,0,0.2);
+      transition: all 0.2s ease;
+      position: relative;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
+    .aqi-segment.good { background: #4CAF50; }
+    .aqi-segment.moderate { background: #FFEB3B; color: #333; text-shadow: none; }
+    .aqi-segment.poor { background: #FF9800; }
+    .aqi-segment.unhealthy { background: #F44336; }
+    .aqi-segment.very-unhealthy { background: #9C27B0; }
+    .aqi-segment.hazardous { background: #8D1E3A; }
+
+    .aqi-segment.current {
+      z-index: 2;
+    }
+
+    .aqi-scale-indicator {
+      text-align: center;
+      margin-top: 15px;
+      font-size: 0.9rem;
+      color: #666;
+    }
+
+    .current-aqi-value {
+      font-weight: bold;
+      color: #333;
+    }
+
+    .pollutants-section {
+      margin-top: 2rem;
+    }
+
+    .section-title {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+      color: #333;
+    }
+
+    .pollutants-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .pollutant-card {
+      background: #f8f9fa;
+      padding: 1.5rem;
+      border-radius: 10px;
+      text-align: center;
+      transition: all 0.3s ease;
+      border-left: 4px solid #2196F3;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      cursor: pointer;
+      position: relative;
+    }
+
+    .pollutant-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .pollutant-card.expanded {
+      text-align: left;
+      background: white;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      grid-column: 1 / -1; /* Make expanded cards span full width */
+      max-width: none;
+    }
+
+    .pollutant-header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+      position: relative;
+    }
+
+    .pollutant-card.expanded .pollutant-header {
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+
+    .pollutant-name {
+      font-size: 1.1rem;
+      color: #666;
+      font-weight: 600;
+    }
+
+    .pollutant-icons {
+      position: absolute;
+      right: 0;
+      top: 0;
+    }
+
+    .pollutant-card.expanded .pollutant-icons {
+      position: static;
+    }
+
+    .pollutant-icons {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .info-icon {
+      width: 16px;
+      height: 16px;
+      background: #2196F3;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .info-icon:hover {
+      background: #1976D2;
+      transform: scale(1.1);
+    }
+
+    .expand-icon {
+      font-size: 12px;
+      color: #2196F3;
+      transition: transform 0.3s ease;
+    }
+
+    .pollutant-card.expanded .expand-icon {
+      transform: rotate(180deg);
+    }
+
+    .pollutant-value {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 0.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+
+    .who-indicator {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .who-indicator.good {
+      background-color: #4CAF50;
+    }
+
+    .who-indicator.moderate {
+      background-color: #FF9800;
+    }
+
+    .who-indicator.unhealthy {
+      background-color: #F44336;
+    }
+
+    .value-with-indicator {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .pollutant-unit {
+      font-size: 0.9rem;
+      color: #999;
+      font-weight: normal;
+    }
+
+    .pollutant-details {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+      margin-top: 0;
+    }
+
+    .pollutant-card.expanded .pollutant-details {
+      max-height: 500px; /* Increased from 300px */
+      margin-top: 1rem;
+    }
+
+    .pollutant-description {
+      font-size: 0.9rem;
+      color: #666;
+      line-height: 1.5;
+      margin-bottom: 1.5rem; /* Increased margin */
+    }
+
+    .pollutant-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem; /* Increased gap */
+      margin-bottom: 1.5rem; /* Increased margin */
+    }
+
+    .stat-item {
+      background: #f8f9fa;
+      padding: 1rem; /* Increased padding */
+      border-radius: 8px;
+      border-left: 3px solid #2196F3;
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 0.5rem; /* Increased margin */
+    }
+
+    .stat-value {
+      font-size: 0.95rem; /* Slightly larger font */
+      font-weight: 600;
+      color: #333;
+      line-height: 1.4; /* Better line height for wrapping text */
+      word-wrap: break-word; /* Allow text to wrap */
+    }
+
+    .health-impact {
+      background: #fff3cd;
+      border: 1px solid #ffeaa7;
+      border-radius: 8px;
+      padding: 1rem; /* Increased padding */
+      margin-top: 1rem;
+    }
+
+    .health-impact.good {
+      background: #d4edda;
+      border-color: #c3e6cb;
+    }
+
+    .health-impact.moderate {
+      background: #fff3cd;
+      border-color: #ffeaa7;
+    }
+
+    .health-impact.unhealthy {
+      background: #f8d7da;
+      border-color: #f5c6cb;
+    }
+
+    .health-title {
+      font-size: 0.85rem; /* Slightly larger */
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 0.75rem; /* Increased margin */
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .health-text {
+      font-size: 0.9rem; /* Slightly larger */
+      color: #666;
+      line-height: 1.5; /* Better line height */
+    }
+
+    .recommendations-section {
+      padding: 2rem;
+      border-radius: 10px;
+      margin-top: 2rem;
+    }
+
+    .city-stations-section {
+      margin-top: 2rem;
+    }
+
+    .station-subtitle {
+      color: #666;
+      font-size: 0.9rem;
+      margin-bottom: 1.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .stations-list {
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .stations-header {
+      display: grid;
+      grid-template-columns: 60px 1fr 80px;
+      background: #f8f9fa;
+      padding: 1rem;
+      font-weight: 600;
+      color: #666;
+      font-size: 0.9rem;
+      border-bottom: 1px solid #e9ecef;
+    }
+
+    .station-rank-col {
+      text-align: center;
+    }
+
+    .station-name-col {
+      text-align: left;
+    }
+
+    .station-aqi-col {
+      text-align: center;
+    }
+
+    .station-row {
+      display: grid;
+      grid-template-columns: 60px 1fr 80px;
+      padding: 1rem;
+      border-bottom: 1px solid #f1f1f1;
+      align-items: center;
+      transition: background-color 0.2s ease;
+      cursor: pointer;
+    }
+
+    .station-row:hover {
+      background-color: #f0f8ff;
+      border-left: 4px solid #2196F3;
+    }
+
+    .station-row:last-child {
+      border-bottom: none;
+    }
+
+    .station-rank {
+      text-align: center;
+      font-weight: 600;
+      color: #333;
+      font-size: 1.1rem;
+    }
+
+    .station-info {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .country-flag {
+      font-size: 1.2rem;
+    }
+
+    .station-location {
+      color: #333;
+      font-size: 0.95rem;
+      line-height: 1.3;
+    }
+
+    .station-aqi-badge {
+      background: #FF9800;
+      color: white;
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      font-weight: 600;
+      text-align: center;
+      font-size: 0.9rem;
+      min-width: 60px;
+    }
+
+    .data-attribution {
+      display: inline-block;
+      position: relative;
+    }
+
+    .attribution-trigger {
+      color: #2196F3;
+      cursor: pointer;
+      text-decoration: underline;
+      position: relative;
+    }
+
+    .attribution-trigger:hover {
+      color: #1976D2;
+    }
+
+    .attribution-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      background: white;
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      padding: 0.75rem;
+      min-width: 250px;
+      z-index: 1000;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-5px);
+      transition: all 0.2s ease;
+    }
+
+    .attribution-trigger:hover .attribution-dropdown {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .attribution-title {
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+    }
+
+    .attribution-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.25rem 0;
+      font-size: 0.85rem;
+      color: #666;
+    }
+
+    .attribution-icon {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #2196F3;
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+
+    .attribution-text {
+      line-height: 1.3;
+    }
+
+    .recommendations-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.5rem;
+      margin-top: 1rem;
+    }
+
+    .recommendation-card {
+      background: white;
+      padding: 1.5rem;
+      border-radius: 10px;
+      border-left: 4px solid #4CAF50;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .recommendation-card.warning {
+      border-left-color: #FF9800;
+    }
+
+    .recommendation-card.danger {
+      border-left-color: #F44336;
+    }
+
+    /* Recommendation card colors matching AQI categories */
+    .recommendation-card.rec-good {
+      border-left-color: #4CAF50;
+    }
+
+    .recommendation-card.rec-moderate {
+      border-left-color: #FFEB3B;
+    }
+
+    .recommendation-card.rec-unhealthy-sensitive {
+      border-left-color: #FF9800;
+    }
+
+    .recommendation-card.rec-unhealthy {
+      border-left-color: #F44336;
+    }
+
+    .recommendation-card.rec-very-unhealthy {
+      border-left-color: #9C27B0;
+    }
+
+    .recommendation-card.rec-hazardous {
+      border-left-color: #8D1E3A;
+    }
+
+    .recommendation-title {
+      font-size: 1.1rem;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+      color: #333;
+    }
+
+    .recommendation-text {
+      color: #666;
+      line-height: 1.5;
+    }
+
+    .no-results {
+      text-align: center;
+      padding: 3rem;
+      color: #666;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 2rem;
+      color: #666;
+    }
+
+    .error {
+      background: #ffebee;
+      color: #c62828;
+      padding: 1rem;
+      border-radius: 10px;
+      margin: 1rem 0;
+      text-align: center;
+    }
+
+    /* AQI Category Colors */
+    .aqi-good { background: linear-gradient(135deg, #4CAF50, #45a049); }
+    .aqi-moderate { background: linear-gradient(135deg, #FFEB3B, #FBC02D); color: #333; }
+    .aqi-unhealthy-sensitive { background: linear-gradient(135deg, #FF9800, #F57C00); }
+    .aqi-unhealthy { background: linear-gradient(135deg, #F44336, #D32F2F); }
+    .aqi-very-unhealthy { background: linear-gradient(135deg, #9C27B0, #7B1FA2); }
+    .aqi-hazardous { background: linear-gradient(135deg, #8D1E3A, #6D1529); }
+
+    .footer {
+      background: #2196F3;
+      color: white;
+      text-align: center;
+      padding: 2rem 0;
+      margin-top: 2rem;
+    }
+
+    .footer-content {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+
+    .footer a {
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+      transition: opacity 0.3s ease;
+    }
+
+    .footer a:hover {
+      opacity: 0.8;
+    }
+
+    @media (max-width: 768px) {
+      .nav-container {
+        flex-direction: column;
+        gap: 0.5rem;
+        padding: 0 1rem;
+      }
+      
+      .nav-links {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
+        padding: 0 0.5rem;
+      }
+      
+      .nav-links a {
+        font-size: 0.8rem;
+        padding: 0.25rem 0.5rem;
+        white-space: nowrap;
+        flex: 1;
+        text-align: center;
+      }
+      
+      .hero-title {
+        font-size: 2rem;
+      }
+      
+      .location-result {
+        padding: 1rem;
+      }
+      
+      .location-header {
+        margin-bottom: 1rem;
+      }
+      
+      .location-actions-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+      }
+      
+      .back-btn {
+        width: 100%;
+        text-align: center;
+        font-size: 0.85rem;
+        padding: 0.5rem 1rem;
+      }
+      
+      .favorite-btn {
+        width: 100%;
+        justify-content: center;
+        font-size: 0.85rem;
+        padding: 0.5rem 1rem;
+      }
+      
+      .location-main-content {
+        justify-content: center;
+      }
+      
+      .aqi-main {
+        width: 100%;
+      }
+      
+      .pollutants-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      }
+      
+      .recommendations-grid {
+        grid-template-columns: 1fr;
+      }
+
+      /* Mobile improvements for pollutant details */
+      .pollutant-stats {
+        grid-template-columns: 1fr; /* Single column on mobile */
+        gap: 1rem;
+      }
+
+      /* Hide "Air quality in" text on mobile */
+      .location-info h2 .mobile-hide {
+        display: none;
+      }
+
+      /* Hide AQI scale text labels on mobile, show only numbers */
+      .aqi-segment {
+        font-size: 0.5rem;
+        line-height: 1.2;
+      }
+      
+      .aqi-segment {
+        /* Extract just the numbers on mobile */
+        text-indent: -9999px;
+        position: relative;
+      }
+      
+      .aqi-segment::after {
+        content: attr(data-range);
+        text-indent: 0;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 0.6rem;
+        white-space: nowrap;
+      }
+
+      /* Ensure no horizontal overflow on mobile */
+      .hero-content,
+      .main-content,
+      .footer-content,
+      .nav-container {
+        max-width: 100%;
+        padding-left: 1rem;
+        padding-right: 1rem;
+      }
+
+      .search-container,
+      .search-suggestions,
+      .favorites-section {
+        max-width: calc(100% - 2rem);
+        margin-left: 1rem;
+        margin-right: 1rem;
+      }
+
+      .location-result {
+        margin-left: 0;
+        margin-right: 0;
+        border-radius: 0;
+        padding: 1rem;
+      }
+
+      .main-content {
+        padding: 0;
+        margin-bottom: 0;
+      }
+
+      .pollutants-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem;
+        padding: 0 0.5rem;
+      }
+
+      .pollutant-card {
+        min-width: 0;
+        width: 100%;
+        max-width: none;
+        padding: 0.75rem 0.5rem;
+      }
+
+      .recommendations-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+        margin: 0;
+      }
+
+      .recommendation-card {
+        margin: 0;
+        width: 100%;
+      }
+
+      .recommendations-section {
+        padding: 0;
+        margin-top: 2rem;
+      }
+
+      .location-main-content {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .aqi-main {
+        width: 100%;
+        margin-bottom: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="nav-container">
+      <a href="/" class="logo">
+        <img src="ventaira-logo.png" alt="Ventaira Logo" style="height: 40px; width: auto;" />
+      </a>
+      <nav class="nav-links">
+        <a href="https://amzn.to/4lMI2yL" target="_blank" rel="noopener">Air Purifiers</a>
+        <a href="https://amzn.to/4megGBo" target="_blank" rel="noopener">Air Filters</a>
+        <a href="https://amzn.to/4m81Vju" target="_blank" rel="noopener">Face Masks</a>
+        <a href="https://amzn.to/3UvXd3f" target="_blank" rel="noopener">Air Monitors</a>
+      </nav>
+    </div>
+  </header>
+
+  <section class="hero-section">
+    <div class="hero-content">
+      <h1 class="hero-title">Air Quality Monitor</h1>
+      <p class="hero-subtitle">Air quality data and health recommendations for your location</p>
+      
+      <div class="search-container">
+        <input 
+          type="text" 
+          class="search-input" 
+          placeholder="Enter your city, country or location..."
+          id="searchInput"
+          onkeyup="handleSearch(event)"
+        />
+      </div>
+      
+      <div class="search-suggestions" id="suggestions"></div>
+      
+      <div class="favorites-section" id="favoritesSection">
+        <div class="favorites-title">⭐ Favorite Locations</div>
+        <div class="favorites-list" id="favoritesList"></div>
+      </div>
+    </div>
+  </section>
+
+  <main class="main-content">
+    <div class="user-info" id="userInfo">
+      <span class="user-email" id="userEmail"></span>
+      <button class="logout-btn" onclick="logout()">Sign Out</button>
+    </div>
+    
+    <div class="location-result" id="locationResult">
+      <!-- Location data will be populated here -->
+    </div>
+    
+    <div class="no-results" id="noResults" style="display: none;">
+      <h3>No results found</h3>
+      <p>Try searching for a different location or check the spelling.</p>
+    </div>
+  </main>
+
+  <!-- Account Modal -->
+  <div class="modal-overlay" id="accountModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Save Your Favorite Locations</h3>
+        <p class="modal-subtitle">Create a free account to save favorites and get personalized air quality updates</p>
+      </div>
+      
+      <div class="modal-benefits">
+        <ul>
+          <li>Save favorite locations across all devices</li>
+          <li>Get email alerts for air quality changes</li>
+          <li>Receive weekly air quality reports</li>
+          <li>Access premium features and forecasts</li>
+        </ul>
+      </div>
+
+      <form class="modal-form" id="accountForm">
+        <div class="form-group">
+          <label class="form-label" for="emailInput">Email Address</label>
+          <input 
+            type="email" 
+            id="emailInput" 
+            class="form-input" 
+            placeholder="your@email.com"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="nameInput">Name (Optional)</label>
+          <input 
+            type="text" 
+            id="nameInput" 
+            class="form-input" 
+            placeholder="Your name"
+          />
+        </div>
+
+        <div class="error-message" id="errorMessage"></div>
+        <div class="success-message" id="successMessage"></div>
+
+        <div class="form-actions">
+          <button type="button" class="btn-secondary" onclick="closeModal()">Maybe Later</button>
+          <button type="submit" class="btn-primary">Create Account</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-content">
+      <p>&copy; 2025 Ventaira. All rights reserved. | <a href="contact.html">Contact</a> | <a href="#" onclick="showDisclaimer()">Disclaimer</a></p>
+    </div>
+  </footer>
+
+  <!-- Disclaimer Modal -->
+  <div class="modal-overlay" id="disclaimerModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Disclaimer</h3>
+        <p class="modal-subtitle">Important information about our service</p>
+      </div>
+      
+      <div style="text-align: left; line-height: 1.6; color: #666;">
+        <p style="margin-bottom: 1rem;">The information presented on Ventaira is for educational and informational purposes only and is not intended as medical advice, legal guidance, or a substitute for professional consultation. All data is sourced from publicly available scientific studies, regulatory bodies, and third-party reports, and is provided to help users make informed decisions.</p>
+        
+        <p style="margin-bottom: 1rem;">Ventaira does not conduct independent product testing on every product unless explicitly stated, and does not assert that any or all specific product contains a given substance or contaminant. We rather share findings found in verified individual reports.</p>
+        
+        <p style="margin-bottom: 1rem;">While we strive for accuracy, data may be subject to updates or revision as new findings emerge. Users are encouraged to consult qualified professionals for personal dietary, medical, or legal decisions.</p>
+        
+        <p style="margin-bottom: 1rem;">Ventaira disclaims all liability for actions or conclusions made based on content presented in the app or on any of our platforms.</p>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-primary" onclick="closeDisclaimerModal()" style="width: 100%;">I Understand</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    // Import the functions you need from the SDKs you need
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, doc, updateDoc, getDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+    
+    // Your web app's Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyBlpbEmZrpJZk91YoNkXx91rjslY-JH_QY",
+      authDomain: "ventaira-backend.firebaseapp.com",
+      projectId: "ventaira-backend",
+      storageBucket: "ventaira-backend.firebasestorage.app",
+      messagingSenderId: "719772534278",
+      appId: "1:719772534278:web:38c803eebed8633d33a587",
+      measurementId: "G-39CKW2CMXK"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Make Firebase available globally
+    window.firebaseDB = db;
+    window.firebaseUtils = {
+      collection,
+      addDoc,
+      doc,
+      updateDoc,
+      getDoc,
+      query,
+      where,
+      getDocs
+    };
+  </script>
+
+  <script>
+    let allData = [];
+    let currentLocation = null;
+    let favorites = [];
+    let currentUser = null;
+
+    // Mock API endpoints - replace with your actual backend
+    const API_BASE = 'https://your-api.com/api'; // Replace with your backend URL
+
+    // Check if user is logged in on page load
+    function checkAuth() {
+      const storedUser = localStorage.getItem('ventaira-user');
+      if (storedUser) {
+        try {
+          currentUser = JSON.parse(storedUser);
+          showUserInfo();
+          loadUserFavorites();
+        } catch (error) {
+          console.error('Error parsing stored user:', error);
+          localStorage.removeItem('ventaira-user');
+        }
+      }
+    }
+
+    // Show user info bar
+    function showUserInfo() {
+      if (currentUser) {
+        document.getElementById('userEmail').textContent = currentUser.email;
+        document.getElementById('userInfo').style.display = 'flex';
+      }
+    }
+
+    // Hide user info bar
+    function hideUserInfo() {
+      document.getElementById('userInfo').style.display = 'none';
+    }
+
+    // Show account modal
+    function showAccountModal() {
+      document.getElementById('accountModal').classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+
+    // Close modal
+    function closeModal() {
+      document.getElementById('accountModal').classList.remove('show');
+      document.body.style.overflow = 'auto';
+      clearMessages();
+    }
+
+    // Clear error/success messages
+    function clearMessages() {
+      document.getElementById('errorMessage').style.display = 'none';
+      document.getElementById('successMessage').style.display = 'none';
+    }
+
+    // Show error message
+    function showError(message) {
+      const errorEl = document.getElementById('errorMessage');
+      errorEl.textContent = message;
+      errorEl.style.display = 'block';
+      document.getElementById('successMessage').style.display = 'none';
+    }
+
+    // Show success message
+    function showSuccess(message) {
+      const successEl = document.getElementById('successMessage');
+      successEl.textContent = message;
+      successEl.style.display = 'block';
+      document.getElementById('errorMessage').style.display = 'none';
+    }
+
+    // Real Firebase API functions
+    async function createAccount(email, name) {
+      try {
+        const { collection, addDoc, query, where, getDocs } = window.firebaseUtils;
+        
+        // Check if user already exists
+        const usersRef = collection(window.firebaseDB, 'users');
+        const q = query(usersRef, where('email', '==', email));
+        const existingUsers = await getDocs(q);
+        
+        if (!existingUsers.empty) {
+          // User exists, return existing user
+          const existingUser = existingUsers.docs[0];
+          return {
+            id: existingUser.id,
+            email: email,
+            name: name,
+            favorites: existingUser.data().favorites || []
+          };
+        }
+        
+        // Create new user
+        const docRef = await addDoc(collection(window.firebaseDB, 'users'), {
+          email: email,
+          name: name,
+          favorites: [],
+          createdAt: new Date()
+        });
+        
+        return {
+          id: docRef.id,
+          email: email,
+          name: name,
+          favorites: []
+        };
+      } catch (error) {
+        console.error('Firebase error:', error);
+        throw new Error('Failed to create account. Please try again.');
+      }
+    }
+
+    // Load user favorites from Firebase
+    async function loadUserFavorites() {
+      if (!currentUser) return;
+      
+      try {
+        const { doc, getDoc } = window.firebaseUtils;
+        const userDocRef = doc(window.firebaseDB, 'users', currentUser.id);
+        const userDoc = await getDoc(userDocRef);
+        
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          favorites = userData.favorites || [];
+          updateFavoritesDisplay();
+        }
+      } catch (error) {
+        console.error('Error loading favorites:', error);
+        // Fallback to localStorage
+        const stored = localStorage.getItem(`ventaira-favorites-${currentUser.email}`);
+        favorites = stored ? JSON.parse(stored) : [];
+        updateFavoritesDisplay();
+      }
+    }
+
+    // Save user favorites to Firebase
+    async function saveUserFavorites() {
+      if (!currentUser) return;
+      
+      try {
+        const { doc, updateDoc } = window.firebaseUtils;
+        const userDocRef = doc(window.firebaseDB, 'users', currentUser.id);
+        
+        await updateDoc(userDocRef, {
+          favorites: favorites,
+          lastUpdated: new Date()
+        });
+        
+        // Also save to localStorage as backup
+        localStorage.setItem(`ventaira-favorites-${currentUser.email}`, JSON.stringify(favorites));
+      } catch (error) {
+        console.error('Error saving to Firebase:', error);
+        // Fallback to localStorage
+        localStorage.setItem(`ventaira-favorites-${currentUser.email}`, JSON.stringify(favorites));
+      }
+    }
+
+    // Handle account form submission
+    document.getElementById('accountForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      clearMessages();
+      
+      const email = document.getElementById('emailInput').value.trim();
+      const name = document.getElementById('nameInput').value.trim();
+      
+      if (!email) {
+        showError('Please enter your email address');
+        return;
+      }
+      
+      try {
+        // Show loading state
+        const submitBtn = e.target.querySelector('.btn-primary');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Creating Account...';
+        submitBtn.disabled = true;
+        
+        // Create account
+        const user = await createAccount(email, name);
+        currentUser = user;
+        
+        // Save user to localStorage for session persistence
+        localStorage.setItem('ventaira-user', JSON.stringify(user));
+        
+        // If there was a pending favorite, add it now
+        if (currentLocation) {
+          addToFavorites(currentLocation);
+        }
+        
+        showSuccess('Account created successfully! Welcome to Ventaira!');
+        
+        setTimeout(() => {
+          closeModal();
+          showUserInfo();
+          
+          // Reset form
+          document.getElementById('accountForm').reset();
+          submitBtn.textContent = originalText;
+          submitBtn.disabled = false;
+        }, 1500);
+        
+      } catch (error) {
+        showError(error.message || 'Failed to create account. Please try again.');
+        
+        // Reset submit button
+        const submitBtn = e.target.querySelector('.btn-primary');
+        submitBtn.textContent = 'Create Account';
+        submitBtn.disabled = false;
+      }
+    });
+
+    // Logout function
+    function logout() {
+      currentUser = null;
+      favorites = [];
+      localStorage.removeItem('ventaira-user');
+      hideUserInfo();
+      updateFavoritesDisplay();
+      updateFavoriteButton();
+    }
+
+    // Add location to favorites (now requires account)
+    function addToFavorites(cityData) {
+      if (!currentUser) {
+        showAccountModal();
+        return;
+      }
+      
+      // Handle both single location and city array
+      const cityName = Array.isArray(cityData) ? (cityData[0].city || cityData[0].location_name) : (cityData.city || cityData.location_name);
+      const firstLocation = Array.isArray(cityData) ? cityData[0] : cityData;
+      
+      const exists = favorites.find(fav => fav.city === cityName);
+      if (!exists) {
+        favorites.push({
+          city: cityName,
+          state: firstLocation.state,
+          country: firstLocation.country
+        });
+        saveUserFavorites();
+        updateFavoritesDisplay();
+        updateFavoriteButton();
+      }
+    }
+
+    // Remove location from favorites
+    function removeFromFavorites(cityName) {
+      favorites = favorites.filter(fav => fav.city !== cityName);
+      saveUserFavorites();
+      updateFavoritesDisplay();
+      updateFavoriteButton();
+    }
+
+    // Check if location is favorited
+    function isFavorited(cityData) {
+      const cityName = Array.isArray(cityData) ? (cityData[0].city || cityData[0].location_name) : (cityData.city || cityData.location_name);
+      return favorites.some(fav => fav.city === cityName);
+    }
+
+    // Update favorites display
+    function updateFavoritesDisplay() {
+      const favoritesSection = document.getElementById('favoritesSection');
+      const favoritesList = document.getElementById('favoritesList');
+      
+      if (favorites.length === 0 || !currentUser) {
+        favoritesSection.style.display = 'none';
+        return;
+      }
+      
+      favoritesList.innerHTML = favorites.map(fav => {
+        const stateText = fav.state ? `, ${fav.state}` : '';
+        return `
+          <div class="favorite-item" onclick="selectCity('${fav.city}')">
+            ${fav.city}${stateText} (${fav.country})
+            <button class="favorite-remove" onclick="event.stopPropagation(); removeFromFavorites('${fav.city}')" title="Remove from favorites">×</button>
+          </div>
+        `;
+      }).join('');
+      
+      favoritesSection.style.display = 'block';
+    }
+
+    // Update favorite button state
+    function updateFavoriteButton() {
+      const favoriteBtn = document.getElementById('favoriteBtn');
+      if (!favoriteBtn || !currentLocation) return;
+      
+      if (!currentUser) {
+        favoriteBtn.className = 'favorite-btn';
+        favoriteBtn.innerHTML = '☆ Add to Favorites';
+        return;
+      }
+      
+      const favorited = isFavorited(currentLocation);
+      favoriteBtn.className = favorited ? 'favorite-btn favorited' : 'favorite-btn';
+      favoriteBtn.innerHTML = favorited ? '★ Favorited' : '☆ Add to Favorites';
+    }
+
+    // Toggle favorite status
+    function toggleFavorite() {
+      if (!currentLocation) return;
+      
+      if (!currentUser) {
+        showAccountModal();
+        return;
+      }
+      
+      if (isFavorited(currentLocation.location_id)) {
+        removeFromFavorites(currentLocation.location_id);
+      } else {
+        addToFavorites(currentLocation);
+      }
+    }
+
+    // Close modal when clicking outside
+    document.getElementById('accountModal').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) {
+        closeModal();
+      }
+    });
+
+    // Show disclaimer modal
+    function showDisclaimer() {
+      document.getElementById('disclaimerModal').classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+
+    // Close disclaimer modal
+    function closeDisclaimerModal() {
+      document.getElementById('disclaimerModal').classList.remove('show');
+      document.body.style.overflow = 'auto';
+    }
+
+    // Close disclaimer modal when clicking outside
+    document.getElementById('disclaimerModal').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) {
+        closeDisclaimerModal();
+      }
+    });
+
+    // Demo data for testing
+    const demoData = [
+      {
+        "location_id": 13,
+        "location_name": "Demo Delhi Technological University, Delhi - CPCB",
+        "city": "Demo Delhi",
+        "state": null,
+        "country": "IN",
+        "utc": "2025-06-15T02:00:00Z",
+        "PM10": null,
+        "PM10 Unit": null,
+        "PM2.5": 451.0,
+        "PM2.5 Unit": "µg/m³",
+        "CO": null,
+        "CO Unit": null,
+        "NO2": null,
+        "NO2 Unit": null,
+        "O3": 40.3,
+        "O3 Unit": "µg/m³",
+        "SO2": null,
+        "SO2 Unit": null,
+        "BC": null,
+        "BC Unit": null,
+        "VOC": null,
+        "VOC Unit": null,
+        "NH3": null,
+        "NH3 Unit": null,
+        "NO": null,
+        "NO Unit": null,
+        "NOx": null,
+        "NOx Unit": null,
+        "max_aqi": 467,
+        "max_aqi_parameter": "pm25",
+        "max_aqi_category": "Hazardous",
+        "average_aqi": 239,
+        "outdoor_activities": "Stay indoors — outdoor activity is dangerous. Evacuate if advised by local authorities.",
+        "indoor_air": "Create a clean air room with HEPA filtration. Keep HVAC systems on recirculate mode.",
+        "health_tips": "Monitor symptoms — seek medical help if breathing worsens. Check on vulnerable neighbors and family members.",
+        "provider": {
+          "id": 169,
+          "name": "DPCC"
+        }
+      },
+      {
+        "location_id": 17,
+        "location_name": "Demo R K Puram, Delhi - DPCC",
+        "city": "Demo Delhi",
+        "state": null,
+        "country": "IN",
+        "utc": "2025-08-04T18:15:00Z",
+        "PM10": 339.0,
+        "PM10 Unit": "µg/m³",
+        "PM2.5": 201.0,
+        "PM2.5 Unit": "µg/m³",
+        "CO": 95.33,
+        "CO Unit": "µg/m³",
+        "NO2": 4300.0,
+        "NO2 Unit": "µg/m³",
+        "O3": null,
+        "O3 Unit": null,
+        "SO2": 56.9,
+        "SO2 Unit": "µg/m³",
+        "BC": null,
+        "BC Unit": null,
+        "VOC": null,
+        "VOC Unit": null,
+        "NH3": null,
+        "NH3 Unit": null,
+        "NO": null,
+        "NO Unit": null,
+        "NOx": null,
+        "NOx Unit": null,
+        "max_aqi": 251,
+        "max_aqi_parameter": "pm25",
+        "max_aqi_category": "Very Unhealthy",
+        "average_aqi": 186,
+        "outdoor_activities": "Limit time outside for everyone; avoid intense workouts. Postpone outdoor plans if possible.",
+        "indoor_air": "Keep windows shut and run air purifiers. Avoid indoor pollution sources (candles, frying, smoking).",
+        "health_tips": "Consider wearing a KN95/N95 mask outdoors. Stay hydrated and watch for breathing issues.",
+        "provider": {
+          "id": 168,
+          "name": "CPCB"
+        }
+      },
+      {
+        "location_id": 24,
+        "location_name": "Demo New York Central Park",
+        "city": "Demo New York",
+        "state": "New York",
+        "country": "US",
+        "utc": "2025-07-09T18:00:00Z",
+        "PM10": 15.2,
+        "PM10 Unit": "µg/m³",
+        "PM2.5": 8.5,
+        "PM2.5 Unit": "µg/m³",
+        "CO": 0.4,
+        "CO Unit": "mg/m³",
+        "NO2": 12.3,
+        "NO2 Unit": "µg/m³",
+        "O3": 85.2,
+        "O3 Unit": "µg/m³",
+        "SO2": 2.1,
+        "SO2 Unit": "µg/m³",
+        "BC": null,
+        "BC Unit": null,
+        "VOC": null,
+        "VOC Unit": null,
+        "NH3": null,
+        "NH3 Unit": null,
+        "NO": 5.4,
+        "NO Unit": "µg/m³",
+        "NOx": 18.7,
+        "NOx Unit": "µg/m³",
+        "max_aqi": 42,
+        "max_aqi_parameter": "o3",
+        "max_aqi_category": "Good",
+        "average_aqi": 38,
+        "outdoor_activities": "Perfect for outdoor exercise and recreation. Great for opening windows to bring in fresh air.",
+        "indoor_air": "No action needed — air quality is excellent. Optional: Use this time to air out the house.",
+        "health_tips": "Ideal for everyone, including sensitive groups. No protective measures required.",
+        "provider": {
+          "id": 245,
+          "name": "EPA"
+        }
+      },
+      {
+        "location_id": 87,
+        "location_name": "Demo London Westminster",
+        "city": "Demo London",
+        "state": "England",
+        "country": "GB",
+        "utc": "2025-07-09T14:00:00Z",
+        "PM10": 28.4,
+        "PM10 Unit": "µg/m³",
+        "PM2.5": 15.7,
+        "PM2.5 Unit": "µg/m³",
+        "CO": 0.8,
+        "CO Unit": "mg/m³",
+        "NO2": 45.2,
+        "NO2 Unit": "µg/m³",
+        "O3": 92.1,
+        "O3 Unit": "µg/m³",
+        "SO2": 8.3,
+        "SO2 Unit": "µg/m³",
+        "BC": null,
+        "BC Unit": null,
+        "VOC": null,
+        "VOC Unit": null,
+        "NH3": null,
+        "NH3 Unit": null,
+        "NO": 12.8,
+        "NO Unit": "µg/m³",
+        "NOx": 58.0,
+        "NOx Unit": "µg/m³",
+        "max_aqi": 78,
+        "max_aqi_parameter": "no2",
+        "max_aqi_category": "Moderate",
+        "average_aqi": 65,
+        "outdoor_activities": "Safe for most people; sensitive individuals may reduce strenuous activity. Good for walking, biking, or errands outside.",
+        "indoor_air": "Still fine to open windows briefly. Optional: Use air purifier if you are sensitive to pollutants.",
+        "health_tips": "Mild risk for those with asthma or heart conditions. Monitor symptoms if sensitive to air quality.",
+        "provider": {
+          "id": 89,
+          "name": "DEFRA"
+        }
+      },
+      {
+        "location_id": 156,
+        "location_name": "Demo Beijing Olympic Park",
+        "city": "Demo Beijing",
+        "state": null,
+        "country": "CN",
+        "utc": "2025-07-09T10:00:00Z",
+        "PM10": 125.8,
+        "PM10 Unit": "µg/m³",
+        "PM2.5": 89.3,
+        "PM2.5 Unit": "µg/m³",
+        "CO": 1.2,
+        "CO Unit": "mg/m³",
+        "NO2": 67.5,
+        "NO2 Unit": "µg/m³",
+        "O3": 110.4,
+        "O3 Unit": "µg/m³",
+        "SO2": 18.7,
+        "SO2 Unit": "µg/m³",
+        "BC": null,
+        "BC Unit": null,
+        "VOC": null,
+        "VOC Unit": null,
+        "NH3": null,
+        "NH3 Unit": null,
+        "NO": 28.3,
+        "NO Unit": "µg/m³",
+        "NOx": 95.8,
+        "NOx Unit": "µg/m³",
+        "max_aqi": 154,
+        "max_aqi_parameter": "pm25",
+        "max_aqi_category": "Unhealthy for Sensitive Groups",
+        "average_aqi": 142,
+        "outdoor_activities": "Healthy people can be active outside, but limit prolonged exertion. Sensitive groups (kids, elderly, asthmatics) should stay indoors during peak hours.",
+        "indoor_air": "Keep windows mostly closed. Run air purifiers in main living areas and bedrooms.",
+        "health_tips": "Have medications (e.g., inhalers) ready. Check air quality apps before going out.",
+        "provider": {
+          "id": 312,
+          "name": "CNEMC"
+        }
+      },
+      {
+        "location_id": 203,
+        "location_name": "Demo Salt Lake City Downtown",
+        "city": "Demo Salt Lake City",
+        "state": "Utah",
+        "country": "US",
+        "utc": "2025-07-09T19:00:00Z",
+        "PM10": 22.1,
+        "PM10 Unit": "µg/m³",
+        "PM2.5": 12.4,
+        "PM2.5 Unit": "µg/m³",
+        "CO": 0.6,
+        "CO Unit": "mg/m³",
+        "NO2": 18.9,
+        "NO2 Unit": "µg/m³",
+        "O3": 95.7,
+        "O3 Unit": "µg/m³",
+        "SO2": 3.2,
+        "SO2 Unit": "µg/m³",
+        "BC": null,
+        "BC Unit": null,
+        "VOC": null,
+        "VOC Unit": null,
+        "NH3": null,
+        "NH3 Unit": null,
+        "NO": 7.1,
+        "NO Unit": "µg/m³",
+        "NOx": 26.0,
+        "NOx Unit": "µg/m³",
+        "max_aqi": 68,
+        "max_aqi_parameter": "o3",
+        "max_aqi_category": "Moderate",
+        "average_aqi": 55,
+        "outdoor_activities": "Safe for most people; sensitive individuals may reduce strenuous activity. Good for walking, biking, or errands outside.",
+        "indoor_air": "Still fine to open windows briefly. Optional: Use air purifier if you are sensitive to pollutants.",
+        "health_tips": "Mild risk for those with asthma or heart conditions. Monitor symptoms if sensitive to air quality.",
+        "provider": {
+          "id": 245,
+          "name": "EPA"
+        }
+      }
+    ];
+
+    // Load real data from JSON file
+    fetch('aqi_report.json')
+      .then(response => {
+        console.log('Response status:', response.status);
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('Real data loaded successfully:', data.length, 'locations');
+        console.log('Sample location:', data[0]);
+        allData = data;
+      })
+      .catch(err => {
+        console.error('Error loading real data:', err);
+        console.log('Using demo data instead');
+        allData = demoData;
+      });
+
+    // Initialize with demo data first, then replace if real data loads
+    allData = demoData;
+    checkAuth(); // Check if user is already logged in
+    console.log('Demo data loaded as fallback:', allData.length, 'locations');
+
+    function handleSearch(event) {
+      const query = event.target.value.toLowerCase().trim();
+      const suggestions = document.getElementById('suggestions');
+      
+      if (query.length < 2) {
+        suggestions.style.display = 'none';
+        return;
+      }
+
+      // Group locations by city + state + country combination
+      const cityGroups = {};
+      allData.forEach(location => {
+        const city = location.city || location.location_name || 'Unknown';
+        const state = location.state || '';
+        const country = location.country || 'Unknown';
+        const locationKey = `${city}|${state}|${country}`;
+        
+        if (!cityGroups[locationKey]) {
+          cityGroups[locationKey] = {
+            city: city,
+            state: state,
+            country: country,
+            locations: []
+          };
+        }
+        cityGroups[locationKey].locations.push(location);
+      });
+
+      // Search through cities, states, and countries
+      const queryWords = query.split(' ').filter(word => word.length > 0);
+      
+      const matches = Object.keys(cityGroups).filter(locationKey => {
+        const group = cityGroups[locationKey];
+        const cityLower = group.city.toLowerCase();
+        const stateLower = (group.state || '').toLowerCase();
+        const countryLower = group.country.toLowerCase();
+        
+        // Check if all query words are found in the combination of city, state, country
+        return queryWords.every(word => 
+          cityLower.includes(word) || 
+          stateLower.includes(word) || 
+          countryLower.includes(word)
+        );
+      });
+
+      // Sort matches to prioritize exact city name matches first
+      matches.sort((a, b) => {
+        const groupA = cityGroups[a];
+        const groupB = cityGroups[b];
+        
+        // Check if city + state combination matches the query
+        const cityStateA = `${groupA.city} ${groupA.state || ''}`.toLowerCase().trim();
+        const cityStateB = `${groupB.city} ${groupB.state || ''}`.toLowerCase().trim();
+        
+        const exactMatchA = cityStateA === query || groupA.city.toLowerCase() === query;
+        const exactMatchB = cityStateB === query || groupB.city.toLowerCase() === query;
+        if (exactMatchA && !exactMatchB) return -1;
+        if (exactMatchB && !exactMatchA) return 1;
+        
+        // City name starts with first word of query
+        const firstWord = queryWords[0] || '';
+        const startsWithA = groupA.city.toLowerCase().startsWith(firstWord);
+        const startsWithB = groupB.city.toLowerCase().startsWith(firstWord);
+        if (startsWithA && !startsWithB) return -1;
+        if (startsWithB && !startsWithA) return 1;
+        
+        // Alphabetical order for the rest
+        return groupA.city.localeCompare(groupB.city);
+      });
+
+      // Take first 15 matches instead of 5
+      const topMatches = matches.slice(0, 15);
+
+      if (topMatches.length > 0) {
+        suggestions.innerHTML = topMatches.map(locationKey => {
+          const group = cityGroups[locationKey];
+          const stateText = group.state ? `, ${group.state}` : '';
+          return `
+            <div class="suggestion-item" onclick="selectCityGroup('${locationKey.replace(/'/g, "\\'")}')">
+              <strong>${group.city}</strong>${stateText} - ${group.country}
+            </div>
+          `;
+        }).join('');
+        suggestions.style.display = 'block';
+      } else {
+        suggestions.style.display = 'none';
+      }
+
+      if (event.key === 'Enter') {
+        performSearch();
+      }
+    }
+
+    function selectCityGroup(locationKey) {
+      // Parse the locationKey back to city, state, country
+      const [city, state, country] = locationKey.split('|');
+      
+      // Find all locations for this specific city+state+country combination
+      const cityLocations = allData.filter(loc => {
+        const locCity = loc.city || loc.location_name || 'Unknown';
+        const locState = loc.state || '';
+        const locCountry = loc.country || 'Unknown';
+        return locCity === city && locState === state && locCountry === country;
+      });
+      
+      if (cityLocations.length > 0) {
+        currentLocation = cityLocations; // Store array of locations for the city
+        document.getElementById('searchInput').value = city;
+        document.getElementById('suggestions').style.display = 'none';
+        displayCityData(city, cityLocations);
+      }
+    }
+
+    function selectCity(cityName) {
+      // For backward compatibility, find locations matching this city name
+      const cityLocations = allData.filter(loc => {
+        const locCity = loc.city || loc.location_name || 'Unknown';
+        return locCity === cityName;
+      });
+      if (cityLocations.length > 0) {
+        currentLocation = cityLocations; // Store array of locations for the city
+        document.getElementById('searchInput').value = cityName;
+        document.getElementById('suggestions').style.display = 'none';
+        displayCityData(cityName, cityLocations);
+      }
+    }
+
+    function selectLocation(locationId) {
+      const location = allData.find(loc => loc.location_id === locationId);
+      if (location) {
+        const cityName = location.city || location.location_name;
+        selectCity(cityName);
+      }
+    }
+
+    function performSearch() {
+      const query = document.getElementById('searchInput').value.toLowerCase().trim();
+      document.getElementById('suggestions').style.display = 'none';
+      
+      if (!query) return;
+
+      // Group locations by city + state + country combination
+      const cityGroups = {};
+      allData.forEach(location => {
+        const city = location.city || location.location_name || 'Unknown';
+        const state = location.state || '';
+        const country = location.country || 'Unknown';
+        const locationKey = `${city}|${state}|${country}`;
+        
+        if (!cityGroups[locationKey]) {
+          cityGroups[locationKey] = {
+            city: city,
+            state: state,
+            country: country,
+            locations: []
+          };
+        }
+        cityGroups[locationKey].locations.push(location);
+      });
+
+      // Find matching city group
+      const queryWords = query.split(' ').filter(word => word.length > 0);
+      
+      const matchingKey = Object.keys(cityGroups).find(locationKey => {
+        const group = cityGroups[locationKey];
+        const cityLower = group.city.toLowerCase();
+        const stateLower = (group.state || '').toLowerCase();
+        const countryLower = group.country.toLowerCase();
+        
+        // Check if all query words are found in the combination of city, state, country
+        return queryWords.every(word => 
+          cityLower.includes(word) || 
+          stateLower.includes(word) || 
+          countryLower.includes(word)
+        );
+      });
+
+      if (matchingKey) {
+        const group = cityGroups[matchingKey];
+        currentLocation = group.locations;
+        displayCityData(group.city, group.locations);
+        document.getElementById('noResults').style.display = 'none';
+      } else {
+        document.getElementById('locationResult').style.display = 'none';
+        document.getElementById('noResults').style.display = 'block';
+      }
+    }
+
+    function displaySingleStation(locationId) {
+      const location = allData.find(loc => loc.location_id === locationId);
+      if (!location) return;
+      
+      currentLocation = [location]; // Store as array for consistency
+      
+      const resultDiv = document.getElementById('locationResult');
+      const aqiClass = getAqiClass(location.max_aqi_category);
+      const pollutants = getPollutants(location);
+      
+      // Extract provider name
+      let providerName = 'Multiple sources';
+      if (location.provider) {
+        if (typeof location.provider === 'object' && location.provider.name) {
+          providerName = location.provider.name;
+        }
+      }
+      
+      // Apply AQI category background color
+      resultDiv.className = `location-result ${aqiClass}`;
+      
+      resultDiv.innerHTML = `
+        <div class="location-header">
+          <div class="location-info">
+            <h2>Air quality at ${location.location_name}</h2>
+            <div class="location-meta">
+              ${location.city}${location.state ? `, ${location.state}` : ''}, ${location.country} • ${getDataAttributionHTML([location])} • ${formatTimestamp(location.utc)}
+            </div>
+          </div>
+        </div>
+
+        <div class="location-actions-row">
+          <button class="btn-secondary back-btn" onclick="goBackToCity('${location.city || location.location_name}')">
+            ← Back to ${location.city} Overview
+          </button>
+          <button class="favorite-btn" id="favoriteBtn" onclick="toggleFavorite()">
+            ☆ Add to Favorites
+          </button>
+        </div>
+
+        <div class="location-main-content">
+          <div class="aqi-main ${aqiClass}">
+            <div class="aqi-number">${location.max_aqi || 'N/A'}</div>
+            <div style="font-size: 0.8rem; opacity: 0.8; line-height: 1; margin-top: -0.1rem; margin-bottom: 0.5rem;">AQI US</div>
+            <div class="aqi-label">${location.max_aqi_category || 'Unknown'}</div>
+            <div class="aqi-category">Main pollutant: ${formatPollutantName(location.max_aqi_parameter) || 'Unknown'}</div>
+          </div>
+        </div>
+
+        <div class="aqi-scale">
+          <div class="aqi-scale-container">
+            <div class="aqi-segment good ${location.max_aqi_category === 'Good' ? 'current' : ''}" data-range="0-50">Good 0-50</div>
+            <div class="aqi-segment moderate ${location.max_aqi_category === 'Moderate' ? 'current' : ''}" data-range="51-100">Moderate 51-100</div>
+            <div class="aqi-segment poor ${location.max_aqi_category === 'Unhealthy for Sensitive Groups' ? 'current' : ''}" data-range="101-150">Poor 101-150</div>
+            <div class="aqi-segment unhealthy ${location.max_aqi_category === 'Unhealthy' ? 'current' : ''}" data-range="151-200">Unhealthy 151-200</div>
+            <div class="aqi-segment very-unhealthy ${location.max_aqi_category === 'Very Unhealthy' ? 'current' : ''}" data-range="201-300">Very Unhealthy 201-300</div>
+            <div class="aqi-segment hazardous ${location.max_aqi_category === 'Hazardous' ? 'current' : ''}" data-range="301+">Hazardous 301+</div>
+          </div>
+        </div>
+
+        <div class="pollutants-section">
+          <h3 class="section-title">Current Pollutant Levels</h3>
+          <div class="pollutants-grid">
+            ${pollutants.map(p => `
+              <div class="pollutant-card" onclick="togglePollutantDetails(this, '${p.key}')">
+                <div class="pollutant-header">
+                  <div class="pollutant-name">${p.name}</div>
+                  <div class="pollutant-icons">
+                    <div class="info-icon">i</div>
+                    <div class="expand-icon">▼</div>
+                  </div>
+                </div>
+                <div class="pollutant-value">
+                  <div class="value-with-indicator">
+                    ${p.whoIndicator ? `<div class="who-indicator ${p.whoLevel}"></div>` : ''}
+                    <span>${p.value} <span class="pollutant-unit">${p.unit}</span></span>
+                  </div>
+                </div>
+                
+                <div class="pollutant-details">
+                  <div class="pollutant-description">${p.description}</div>
+                  
+                  <div class="pollutant-stats">
+                    <div class="stat-item">
+                      <div class="stat-label">WHO Guideline</div>
+                      <div class="stat-value">${p.whoGuideline}</div>
+                    </div>
+                    <div class="stat-item">
+                      <div class="stat-label">Main Sources</div>
+                      <div class="stat-value">${p.sources}</div>
+                    </div>
+                  </div>
+                  
+                  <div class="health-impact ${p.healthLevel}">
+                    <div class="health-title">Health Impact</div>
+                    <div class="health-text">${p.healthImpact}</div>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <div class="recommendations-section">
+          <h3 class="section-title">Health Recommendations</h3>
+          <div class="recommendations-grid">
+            <div class="recommendation-card ${getRecommendationClass(location.max_aqi_category)}">
+              <div class="recommendation-title">🏃 Outdoor Activities</div>
+              <div class="recommendation-text">${formatAsBulletPoints(location.outdoor_activities || 'No outdoor guidance available')}</div>
+              <div style="margin-top: 0.75rem;">
+                <a href="https://amzn.to/4m81Vju" target="_blank" rel="noopener" style="color: #2196F3; text-decoration: none; font-weight: 500; font-size: 0.9rem;">Get a mask</a>
+              </div>
+            </div>
+            <div class="recommendation-card ${getRecommendationClass(location.max_aqi_category)}">
+              <div class="recommendation-title">🏠 Indoor Air Quality</div>
+              <div class="recommendation-text">${formatAsBulletPoints(location.indoor_air || 'No indoor guidance available')}</div>
+              <div style="margin-top: 0.75rem;">
+                <a href="https://amzn.to/4lMI2yL" target="_blank" rel="noopener" style="color: #2196F3; text-decoration: none; font-weight: 500; font-size: 0.9rem;">Get an air purifier</a>
+              </div>
+            </div>
+            <div class="recommendation-card ${getRecommendationClass(location.max_aqi_category)}">
+              <div class="recommendation-title">🏥 Health Tips</div>
+              <div class="recommendation-text">${formatAsBulletPoints(location.health_tips || 'No health guidance available')}</div>
+              <div style="margin-top: 0.75rem;">
+                <a href="https://amzn.to/3UvXd3f" target="_blank" rel="noopener" style="color: #2196F3; text-decoration: none; font-weight: 500; font-size: 0.9rem;">Get a monitor</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      resultDiv.style.display = 'block';
+      updateFavoriteButton();
+      
+      // Scroll to show the location result slightly above the viewport top
+      setTimeout(() => {
+        const locationResult = document.getElementById('locationResult');
+        const rect = locationResult.getBoundingClientRect();
+        const offsetTop = window.pageYOffset + rect.top - 80; // 80px higher than normal
+        window.scrollTo({ top: offsetTop, behavior: 'smooth' });
+      }, 100);
+    }
+
+    function goBackToCity(cityName) {
+      selectCity(cityName);
+    }
+
+    function displayCityData(cityName, cityLocations) {
+      const resultDiv = document.getElementById('locationResult');
+      
+      // Calculate city-wide statistics from all locations in the city
+      const validLocations = cityLocations.filter(loc => loc.max_aqi !== null && loc.max_aqi !== undefined);
+      
+      if (validLocations.length === 0) {
+        resultDiv.innerHTML = '<p>No air quality data available for this city.</p>';
+        resultDiv.style.display = 'block';
+        return;
+      }
+
+      // Calculate average of max_aqi for the city
+      const cityAverageAqi = Math.round(
+        validLocations.reduce((sum, loc) => sum + loc.max_aqi, 0) / validLocations.length
+      );
+
+      // Find the location with data for pollutant details (use first available)
+      const referenceLocation = validLocations[0];
+
+      // Determine AQI category based on city average
+      const aqiCategory = getAqiCategoryFromValue(cityAverageAqi);
+      const aqiClass = getAqiClass(aqiCategory);
+      const pollutants = getPollutants(referenceLocation);
+      
+      // Get location info
+      const firstLocation = cityLocations[0];
+      const stateText = firstLocation.state ? `, ${firstLocation.state}` : '';
+      const countryText = firstLocation.country;
+      
+      // Apply AQI category background color to the entire result div
+      resultDiv.className = `location-result ${aqiClass}`;
+      
+      resultDiv.innerHTML = `
+        <div class="location-header">
+          <div class="location-info">
+            <h2><span class="mobile-hide">Air quality in </span>${cityName}</h2>
+            <div class="location-meta">
+              ${cityName}${stateText}, ${countryText} • ${getDataAttributionHTML(cityLocations)} • ${formatTimestamp(referenceLocation.utc)}
+            </div>
+          </div>
+        </div>
+
+        <div class="location-actions-row">
+          <button class="favorite-btn" id="favoriteBtn" onclick="toggleFavorite()">
+            ☆ Add to Favorites
+          </button>
+        </div>
+
+        <div class="location-main-content">
+          <div class="aqi-main ${aqiClass}">
+            <div class="aqi-number">${cityAverageAqi || 'N/A'}</div>
+            <div style="font-size: 0.8rem; opacity: 0.8; line-height: 1; margin-top: -0.1rem; margin-bottom: 0.5rem;">AQI US</div>
+            <div class="aqi-label">${aqiCategory || 'Unknown'}</div>
+            <div class="aqi-category">
+              ${cityLocations.length > 1 ? `Main pollutant: ${formatPollutantName(referenceLocation.max_aqi_parameter) || 'Unknown'}` : `Main pollutant: ${formatPollutantName(referenceLocation.max_aqi_parameter) || 'Unknown'}`}
+            </div>
+          </div>
+        </div>
+
+        <div class="aqi-scale">
+          <div class="aqi-scale-container">
+            <div class="aqi-segment good ${aqiCategory === 'Good' ? 'current' : ''}" data-range="0-50">Good 0-50</div>
+            <div class="aqi-segment moderate ${aqiCategory === 'Moderate' ? 'current' : ''}" data-range="51-100">Moderate 51-100</div>
+            <div class="aqi-segment poor ${aqiCategory === 'Unhealthy for Sensitive Groups' ? 'current' : ''}" data-range="101-150">Poor 101-150</div>
+            <div class="aqi-segment unhealthy ${aqiCategory === 'Unhealthy' ? 'current' : ''}" data-range="151-200">Unhealthy 151-200</div>
+            <div class="aqi-segment very-unhealthy ${aqiCategory === 'Very Unhealthy' ? 'current' : ''}" data-range="201-300">Very Unhealthy 201-300</div>
+            <div class="aqi-segment hazardous ${aqiCategory === 'Hazardous' ? 'current' : ''}" data-range="301+">Hazardous 301+</div>
+          </div>
+        </div>
+
+        <div class="pollutants-section">
+          <h3 class="section-title">Current Pollutant Levels</h3>
+          <div class="pollutants-grid">
+            ${cityLocations.length > 1 ? 
+              // Use correctly averaged data for multiple stations
+              ['PM10', 'PM2.5', 'CO', 'NO2', 'O3', 'SO2', 'BC', 'VOC', 'NH3', 'NO', 'NOx'].map(pollutant => {
+                const values = cityLocations.map(loc => loc[pollutant]).filter(val => val != null);
+                if (values.length === 0) return '';
+                
+                const average = Math.round((values.reduce((sum, val) => sum + val, 0) / values.length) * 10) / 10;
+                const unit = cityLocations.find(loc => loc[`${pollutant} Unit`])?.[`${pollutant} Unit`] || '';
+                
+                // Create a fake location object with averaged data for getPollutants function
+                const avgLocation = { [pollutant]: average, [`${pollutant} Unit`]: unit };
+                const pollutantInfo = getPollutants(avgLocation);
+                
+                if (pollutantInfo.length === 0) return '';
+                const p = pollutantInfo[0];
+                
+                return `
+                  <div class="pollutant-card" onclick="togglePollutantDetails(this, '${p.key}')">
+                    <div class="pollutant-header">
+                      <div class="pollutant-name">${p.name}</div>
+                      <div class="pollutant-icons">
+                        <div class="info-icon">i</div>
+                        <div class="expand-icon">▼</div>
+                      </div>
+                    </div>
+                    <div class="pollutant-value">
+                      <div class="value-with-indicator">
+                        ${p.whoIndicator ? `<div class="who-indicator ${p.whoLevel}"></div>` : ''}
+                        <span>${p.value} <span class="pollutant-unit">${p.unit}</span></span>
+                      </div>
+                    </div>
+                    
+                    <div class="pollutant-details">
+                      <div class="pollutant-description">${p.description}</div>
+                      
+                      <div class="pollutant-stats">
+                        <div class="stat-item">
+                          <div class="stat-label">WHO Guideline</div>
+                          <div class="stat-value">${p.whoGuideline}</div>
+                        </div>
+                        <div class="stat-item">
+                          <div class="stat-label">Main Sources</div>
+                          <div class="stat-value">${p.sources}</div>
+                        </div>
+                      </div>
+                      
+                      <div class="health-impact ${p.healthLevel}">
+                        <div class="health-title">Health Impact</div>
+                        <div class="health-text">${p.healthImpact}</div>
+                      </div>
+                    </div>
+                  </div>
+                `;
+              }).filter(card => card !== '').join('')
+              :
+              // Use original data for single station
+              pollutants.map(p => `
+                <div class="pollutant-card" onclick="togglePollutantDetails(this, '${p.key}')">
+                  <div class="pollutant-header">
+                    <div class="pollutant-name">${p.name}</div>
+                    <div class="pollutant-icons">
+                      <div class="info-icon">i</div>
+                      <div class="expand-icon">▼</div>
+                    </div>
+                  </div>
+                  <div class="pollutant-value">
+                    <div class="value-with-indicator">
+                      ${p.whoIndicator ? `<div class="who-indicator ${p.whoLevel}"></div>` : ''}
+                      <span>${p.value} <span class="pollutant-unit">${p.unit}</span></span>
+                    </div>
+                  </div>
+                  
+                  <div class="pollutant-details">
+                    <div class="pollutant-description">${p.description}</div>
+                    
+                    <div class="pollutant-stats">
+                      <div class="stat-item">
+                        <div class="stat-label">WHO Guideline</div>
+                        <div class="stat-value">${p.whoGuideline}</div>
+                      </div>
+                      <div class="stat-item">
+                        <div class="stat-label">Main Sources</div>
+                        <div class="stat-value">${p.sources}</div>
+                      </div>
+                    </div>
+                    
+                    <div class="health-impact ${p.healthLevel}">
+                      <div class="health-title">Health Impact</div>
+                      <div class="health-text">${p.healthImpact}</div>
+                    </div>
+                  </div>
+                </div>
+              `).join('')
+            }
+          </div>
+        </div>
+
+        <div class="recommendations-section">
+          <h3 class="section-title">Health Recommendations</h3>
+          <div class="recommendations-grid">
+            <div class="recommendation-card ${getRecommendationClass(aqiCategory)}">
+              <div class="recommendation-title">🏃 Outdoor Activities</div>
+              <div class="recommendation-text">${formatAsBulletPoints(referenceLocation.outdoor_activities || 'No outdoor guidance available')}</div>
+              <div style="margin-top: 0.75rem;">
+                <a href="https://amzn.to/4m81Vju" target="_blank" rel="noopener" style="color: #2196F3; text-decoration: none; font-weight: 500; font-size: 0.9rem;">Get a mask</a>
+              </div>
+            </div>
+            <div class="recommendation-card ${getRecommendationClass(aqiCategory)}">
+              <div class="recommendation-title">🏠 Indoor Air Quality</div>
+              <div class="recommendation-text">${formatAsBulletPoints(referenceLocation.indoor_air || 'No indoor guidance available')}</div>
+              <div style="margin-top: 0.75rem;">
+                <a href="https://amzn.to/4lMI2yL" target="_blank" rel="noopener" style="color: #2196F3; text-decoration: none; font-weight: 500; font-size: 0.9rem;">Get an air purifier</a>
+              </div>
+            </div>
+            <div class="recommendation-card ${getRecommendationClass(aqiCategory)}">
+              <div class="recommendation-title">🏥 Health Tips</div>
+              <div class="recommendation-text">${formatAsBulletPoints(referenceLocation.health_tips || 'No health guidance available')}</div>
+              <div style="margin-top: 0.75rem;">
+                <a href="https://amzn.to/3UvXd3f" target="_blank" rel="noopener" style="color: #2196F3; text-decoration: none; font-weight: 500; font-size: 0.9rem;">Get a monitor</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        ${cityLocations.length > 1 ? `
+        <div class="city-stations-section">
+          <h3 class="section-title">Stations in ${cityName}</h3>
+          <div class="stations-list">
+            <div class="stations-header">
+              <div class="station-rank-col">#</div>
+              <div class="station-name-col">Stations</div>
+              <div class="station-aqi-col">AQI US</div>
+            </div>
+            ${cityLocations
+              .sort((a, b) => (b.max_aqi || 0) - (a.max_aqi || 0))
+              .map((station, index) => {
+                const stationCategory = getAqiCategoryFromValue(station.max_aqi);
+                const aqiClass = getAqiClass(stationCategory);
+                return `
+                  <div class="station-row" onclick="displaySingleStation(${station.location_id})">
+                    <div class="station-rank">${index + 1}</div>
+                    <div class="station-info">
+                      <span class="station-location">${station.location_name}</span>
+                    </div>
+                    <div class="station-aqi-badge ${aqiClass}">
+                      ${station.max_aqi || 'N/A'}
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+          </div>
+        </div>
+        ` : ''}
+      `;
+      
+      resultDiv.style.display = 'block';
+      updateFavoriteButton();
+    }
+
+    function calculateAveragePollutants(locations) {
+      if (locations.length === 1) {
+        return locations[0];
+      }
+
+      // List of all possible pollutants
+      const pollutantKeys = ['PM10', 'PM2.5', 'CO', 'NO2', 'O3', 'SO2', 'BC', 'VOC', 'NH3', 'NO', 'NOx'];
+      
+      const averagedLocation = {
+        ...locations[0], // Copy base properties from first location
+      };
+
+      // Calculate averages for each pollutant
+      pollutantKeys.forEach(pollutant => {
+        const unitKey = `${pollutant} Unit`;
+        
+        // Get all valid values for this pollutant
+        const validValues = locations
+          .map(loc => {
+            const value = loc[pollutant];
+            return (value !== null && value !== undefined && !isNaN(parseFloat(value))) ? parseFloat(value) : null;
+          })
+          .filter(val => val !== null);
+        
+        if (validValues.length > 0) {
+          // Calculate average
+          const average = validValues.reduce((sum, val) => sum + val, 0) / validValues.length;
+          averagedLocation[pollutant] = Math.round(average * 10) / 10; // Round to 1 decimal place
+          
+          // Use unit from first location that has this pollutant
+          const locationWithUnit = locations.find(loc => loc[unitKey]);
+          if (locationWithUnit) {
+            averagedLocation[unitKey] = locationWithUnit[unitKey];
+          }
+        } else {
+          // No valid data for this pollutant
+          averagedLocation[pollutant] = null;
+          averagedLocation[unitKey] = null;
+        }
+      });
+
+      return averagedLocation;
+    }
+
+    function getPollutants(location) {
+      const pollutants = [];
+      const pollutantMap = {
+        'PM10': {
+          display: 'PM₁₀',
+          key: 'PM10',
+          description: 'Coarse particulate matter with diameter less than 10 micrometers. These particles can irritate eyes, nose, and throat.',
+          whoGuideline: '45 µg/m³',
+          whoLimit: 45,
+          sources: 'Dust, pollen, construction',
+          healthImpact: 'Can cause coughing and worsen asthma. Generally less harmful than PM2.5.'
+        },
+        'PM2.5': {
+          display: 'PM₂.₅',
+          key: 'PM25',
+          description: 'Fine particulate matter with diameter less than 2.5 micrometers. These tiny particles can penetrate deep into lungs and bloodstream.',
+          whoGuideline: '15 µg/m³',
+          whoLimit: 15,
+          sources: 'Vehicle exhaust, wildfires',
+          healthImpact: 'Linked to heart disease, stroke, lung cancer, and premature death. Most dangerous common pollutant.'
+        },
+        'CO': {
+          display: 'CO',
+          key: 'CO',
+          description: 'Carbon monoxide is a colorless, odorless gas that prevents oxygen from reaching your organs and tissues.',
+          whoGuideline: '10 mg/m³',
+          whoLimit: 10,
+          sources: 'Vehicle exhaust, heating systems',
+          healthImpact: 'Can cause headaches, dizziness, and at high levels can be fatal.'
+        },
+        'NO2': {
+          display: 'NO₂',
+          key: 'NO2',
+          description: 'Nitrogen dioxide is a reddish-brown gas that can irritate airways and reduce lung function.',
+          whoGuideline: '25 µg/m³',
+          whoLimit: 25,
+          sources: 'Traffic, power plants',
+          healthImpact: 'Worsens asthma, increases susceptibility to respiratory infections.'
+        },
+        'O3': {
+          display: 'O₃',
+          key: 'O3',
+          description: 'Ground-level ozone forms when pollutants react with sunlight. Unlike stratospheric ozone, this is harmful to breathe.',
+          whoGuideline: '100 µg/m³',
+          whoLimit: 100,
+          sources: 'Vehicle exhaust + sunlight',
+          healthImpact: 'Causes chest pain, coughing, and throat irritation. Worsens asthma and COPD.'
+        },
+        'SO2': {
+          display: 'SO₂',
+          key: 'SO2',
+          description: 'Sulfur dioxide is a colorless gas with a sharp, irritating smell that can affect breathing.',
+          whoGuideline: '40 µg/m³',
+          whoLimit: 40,
+          sources: 'Coal plants, oil refineries',
+          healthImpact: 'Causes breathing problems, especially for people with asthma.'
+        },
+        'BC': {
+          display: 'BC',
+          key: 'BC',
+          description: 'Black carbon consists of fine particles from incomplete combustion. It absorbs light and heat.',
+          whoGuideline: 'No WHO limit',
+          whoLimit: null,
+          sources: 'Diesel engines, biomass',
+          healthImpact: 'Linked to cardiovascular and respiratory problems.'
+        },
+        'VOC': {
+          display: 'VOC',
+          key: 'VOC',
+          description: 'Volatile organic compounds are chemicals that easily evaporate and can form ground-level ozone.',
+          whoGuideline: 'Varies by compound',
+          whoLimit: null,
+          sources: 'Paints, solvents, fuels',
+          healthImpact: 'Can cause eye irritation, headaches, and some are carcinogenic.'
+        },
+        'NH3': {
+          display: 'NH₃',
+          key: 'NH3',
+          description: 'Ammonia is a colorless gas with a sharp smell that contributes to particulate matter formation.',
+          whoGuideline: 'No WHO limit',
+          whoLimit: null,
+          sources: 'Agriculture, fertilizers',
+          healthImpact: 'Can irritate eyes, nose, and throat at high concentrations.'
+        },
+        'NO': {
+          display: 'NO',
+          key: 'NO',
+          description: 'Nitric oxide is a gas that quickly converts to NO2 in the atmosphere.',
+          whoGuideline: 'No specific limit',
+          whoLimit: null,
+          sources: 'Vehicle exhaust, combustion',
+          healthImpact: 'Less directly harmful than NO2, but contributes to ozone formation.'
+        },
+        'NOx': {
+          display: 'NOₓ',
+          key: 'NOx',
+          description: 'Nitrogen oxides (NO + NO2) are reactive gases that contribute to smog and acid rain.',
+          whoGuideline: 'See NO2 limits',
+          whoLimit: null,
+          sources: 'Traffic, power generation',
+          healthImpact: 'Respiratory irritation and contribution to ozone formation.'
+        }
+      };
+
+      Object.entries(pollutantMap).forEach(([key, info]) => {
+        const value = location[key];
+        const unit = location[`${key} Unit`];
+        if (value !== null && value !== undefined) {
+          const numValue = parseFloat(value);
+          
+          // Skip pollutants that are too small to show meaningfully (less than 0.05)
+          if (numValue < 0.05) {
+            return;
+          }
+          
+          // Determine WHO indicator level and health level
+          let whoLevel = 'good';
+          let healthLevel = 'good';
+          let whoIndicator = false;
+          
+          if (info.whoLimit !== null) {
+            whoIndicator = true;
+            if (numValue <= info.whoLimit) {
+              whoLevel = 'good';
+              healthLevel = 'good';
+            } else if (numValue <= info.whoLimit * 2) {
+              whoLevel = 'moderate';
+              healthLevel = 'moderate';
+            } else {
+              whoLevel = 'unhealthy';
+              healthLevel = 'unhealthy';
+            }
+          }
+          
+          pollutants.push({
+            name: info.display,
+            key: info.key,
+            value: typeof value === 'number' ? value.toFixed(1) : value,
+            unit: unit || '',
+            description: info.description,
+            whoGuideline: info.whoGuideline,
+            sources: info.sources,
+            healthImpact: info.healthImpact,
+            healthLevel: healthLevel,
+            whoIndicator: whoIndicator,
+            whoLevel: whoLevel
+          });
+        }
+      });
+
+      return pollutants;
+    }
+
+    // Toggle pollutant details
+    function togglePollutantDetails(cardElement, pollutantKey) {
+      const isExpanded = cardElement.classList.contains('expanded');
+      
+      // Close all other expanded cards
+      document.querySelectorAll('.pollutant-card.expanded').forEach(card => {
+        if (card !== cardElement) {
+          card.classList.remove('expanded');
+        }
+      });
+      
+      // Toggle current card
+      if (isExpanded) {
+        cardElement.classList.remove('expanded');
+      } else {
+        cardElement.classList.add('expanded');
+      }
+    }
+
+    function getDataAttributionHTML(cityLocations) {
+      // Group locations by provider
+      const providerGroups = {};
+      let totalStations = 0;
+      
+      cityLocations.forEach(location => {
+        let providerName = 'Unknown';
+        if (location.provider) {
+          if (typeof location.provider === 'object' && location.provider.name) {
+            providerName = location.provider.name;
+          } else if (typeof location.provider === 'string') {
+            try {
+              const parsed = JSON.parse(location.provider);
+              providerName = parsed.name || location.provider;
+            } catch {
+              providerName = location.provider;
+            }
+          }
+        }
+        
+        if (!providerGroups[providerName]) {
+          providerGroups[providerName] = 0;
+        }
+        providerGroups[providerName]++;
+        totalStations++;
+      });
+      
+      const providers = Object.keys(providerGroups);
+      
+      // Always show dropdown functionality (OpenAQ counts as +1 contributor)
+      return `
+        <span class="data-attribution">
+          <span class="attribution-trigger">
+            ${providers.length + 1} contributor${providers.length + 1 > 1 ? 's' : ''}
+            <div class="attribution-dropdown">
+              <div class="attribution-title">Data Attribution</div>
+              ${providers.map(provider => `
+                <div class="attribution-item">
+                  <div class="attribution-icon">${provider.charAt(0)}</div>
+                  <div class="attribution-text">${provider}</div>
+                </div>
+              `).join('')}
+              <div class="attribution-item">
+                <div class="attribution-icon">🌐</div>
+                <div class="attribution-text">OpenAQ</div>
+              </div>
+            </div>
+          </span>
+        </span>
+      `;
+    }
+
+    function getCountryFlag(countryCode) {
+      const flagMap = {
+        'IN': '🇮🇳',
+        'US': '🇺🇸', 
+        'GB': '🇬🇧',
+        'CN': '🇨🇳',
+        'CA': '🇨🇦',
+        'AU': '🇦🇺',
+        'DE': '🇩🇪',
+        'FR': '🇫🇷',
+        'JP': '🇯🇵',
+        'KR': '🇰🇷',
+        'BR': '🇧🇷',
+        'MX': '🇲🇽'
+      };
+      
+      return flagMap[countryCode] || '🌍';
+    }
+
+    function getAqiClass(category) {
+      if (!category) return 'aqi-good';
+      
+      const categoryMap = {
+        'Good': 'aqi-good',
+        'Moderate': 'aqi-moderate',
+        'Unhealthy for Sensitive Groups': 'aqi-unhealthy-sensitive',
+        'Unhealthy': 'aqi-unhealthy',
+        'Very Unhealthy': 'aqi-very-unhealthy',
+        'Hazardous': 'aqi-hazardous'
+      };
+      
+      return categoryMap[category] || 'aqi-good';
+    }
+
+    function getAqiCategoryFromValue(aqiValue) {
+      if (!aqiValue || aqiValue < 0) return 'Unknown';
+      
+      if (aqiValue <= 50) return 'Good';
+      if (aqiValue <= 100) return 'Moderate';
+      if (aqiValue <= 150) return 'Unhealthy for Sensitive Groups';
+      if (aqiValue <= 200) return 'Unhealthy';
+      if (aqiValue <= 300) return 'Very Unhealthy';
+      return 'Hazardous';
+    }
+
+    function formatPollutantName(parameterName) {
+      if (!parameterName) return null;
+      
+      const pollutantMap = {
+        'pm10': 'PM₁₀',
+        'pm25': 'PM₂.₅',
+        'co': 'CO',
+        'no2': 'NO₂',
+        'o3': 'O₃',
+        'so2': 'SO₂',
+        'bc': 'BC',
+        'voc': 'VOC',
+        'nh3': 'NH₃',
+        'no': 'NO',
+        'nox': 'NOₓ'
+      };
+      
+      return pollutantMap[parameterName.toLowerCase()] || parameterName.toUpperCase();
+    }
+
+    function formatTimestamp(utcString) {
+      if (!utcString) return 'Unknown update time';
+      
+      try {
+        const utcDate = new Date(utcString);
+        const now = new Date();
+        const diffMs = now - utcDate;
+        const diffMinutes = Math.floor(diffMs / (1000 * 60));
+        const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+        if (diffMinutes < 60) {
+          return `Updated ${diffMinutes} minute${diffMinutes !== 1 ? 's' : ''} ago`;
+        } else if (diffHours < 24) {
+          return `Updated ${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+        } else if (diffDays < 7) {
+          return `Updated ${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+        } else {
+          // For older data, show the actual date
+          return `Updated ${utcDate.toLocaleDateString()}`;
+        }
+      } catch (error) {
+        return 'Invalid timestamp';
+      }
+    }
+
+    function formatAsBulletPoints(text) {
+      if (!text || text === 'No outdoor guidance available' || text === 'No indoor guidance available' || text === 'No health guidance available') {
+        return text;
+      }
+      
+      // Split by periods, filter out empty strings, and create bullet points
+      const sentences = text.split('.').filter(sentence => sentence.trim().length > 0);
+      
+      if (sentences.length <= 1) {
+        return text; // Return original if only one sentence
+      }
+      
+      return sentences.map(sentence => `• ${sentence.trim()}`).join('<br>');
+    }
+
+    function getRecommendationClass(category) {
+      if (!category) return 'rec-good';
+      
+      const categoryMap = {
+        'Good': 'rec-good',
+        'Moderate': 'rec-moderate',
+        'Unhealthy for Sensitive Groups': 'rec-unhealthy-sensitive',
+        'Unhealthy': 'rec-unhealthy',
+        'Very Unhealthy': 'rec-very-unhealthy',
+        'Hazardous': 'rec-hazardous'
+      };
+      
+      return categoryMap[category] || 'rec-good';
+    }
+
+    function showAllLocations() {
+      // Show a simple list of all available locations
+      const resultDiv = document.getElementById('locationResult');
+      const locationsList = allData.slice(0, 20).map(loc => `
+        <div class="suggestion-item" onclick="selectLocation(${loc.location_id})" style="cursor: pointer; margin-bottom: 1rem;">
+          <strong>${loc.location_name}</strong> - ${loc.country} (AQI: ${loc.max_aqi || 'N/A'})
+        </div>
+      `).join('');
+      
+      resultDiv.innerHTML = `
+        <h3>Available Locations</h3>
+        <p>Click on any location to view detailed air quality data:</p>
+        <div style="margin-top: 1rem;">
+          ${locationsList}
+        </div>
+      `;
+      resultDiv.style.display = 'block';
+      document.getElementById('noResults').style.display = 'none';
+    }
+
+    // Hide suggestions when clicking outside
+    document.addEventListener('click', function(event) {
+      if (!event.target.closest('.search-container') && !event.target.closest('.favorites-section')) {
+        document.getElementById('suggestions').style.display = 'none';
+      }
+    });
+  </script>
+</body>
+</html>
